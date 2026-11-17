@@ -26,6 +26,19 @@ def get_d(file):
 		data = {}
 	return data
 
+def _report(page):
+    import traceback
+    try:
+        page.overlay.append(ft.Container(
+            bgcolor="black", expand=True,
+            padding=ft.padding.only(top=40, left=10, right=10),
+            content=ft.Column([ft.Text(traceback.format_exc(), selectable=True, color="red", size=12)],
+                              scroll=ft.ScrollMode.AUTO)))
+        page.update()
+    except Exception:
+        pass
+
+
 def main(page: ft.Page):
     state = AppState(page)
     page.title = state.loc.t("app_name")
@@ -333,7 +346,7 @@ def main(page: ft.Page):
             try:
                 page.update()
             except Exception:
-                pass
+                _report(page)
 
     def load_data(e=None):
         refresh_button.visible = False
@@ -341,7 +354,7 @@ def main(page: ft.Page):
         try:
             page.update()
         except Exception:
-            pass
+            _report(page)
 
         def fetch_data():
             nonlocal all_data, is_offline
@@ -366,7 +379,7 @@ def main(page: ft.Page):
             try:
                 page.update()
             except Exception:
-                pass
+                _report(page)
 
         threading.Thread(target=fetch_data, daemon=True).start()
 
@@ -380,7 +393,7 @@ def main(page: ft.Page):
         try:
             page.update()
         except Exception:
-            pass
+            _report(page)
         load_data()
 
     #onboarding_icon = ft.Icon(ft.icons.SAVINGS_ROUNDED, size=60, color=theme.PRIMARY)
@@ -428,7 +441,7 @@ def main(page: ft.Page):
         try:
             page.update()
         except Exception:
-            pass
+            _report(page)
 
     def open_lang_dialog(e=None):
         lang_dialog.title = ft.Text(state.loc.t("choose_language"), color=theme.TEXT_PRIMARY)
@@ -454,7 +467,7 @@ def main(page: ft.Page):
         try:
             page.update()
         except Exception:
-            pass
+            _report(page)
 
     def apply_language(lang):
         if lang == state.loc.lang:
@@ -477,9 +490,9 @@ def main(page: ft.Page):
         try:
             page.update()
         except Exception:
-            pass
+            _report(page)
 
-    def route_change(route):
+    def _route_change(route):
         page.views.clear()
 
         retracted_container = ft.Container(
@@ -543,7 +556,13 @@ def main(page: ft.Page):
         try:
             page.update()
         except Exception:
-            pass
+            _report(page)
+
+    def route_change(route):
+        try:
+            _route_change(route)
+        except Exception:
+            _report(page)
 
     page.on_route_change = route_change
     page.go("/")
@@ -554,7 +573,7 @@ def main(page: ft.Page):
         try:
             page.update()
         except Exception:
-            pass
+            _report(page)
     else:
         refresh_button.visible = True
         if all_data:
