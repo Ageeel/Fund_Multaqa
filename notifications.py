@@ -12,13 +12,17 @@ NOTIFICATIONS_FILE = "notifications.json"
 COUNT_FILE = "last_count.json"
 
 
+def get_lang(page: ft.Page) -> str:
+    """Single source of truth for the current language code (defaults to Arabic)."""
+    try:
+        return page.client_storage.get("lang") or "ar"
+    except Exception:
+        return "ar"
+
+
 def get_loc(page: ft.Page) -> Language:
     """Reads the persisted language choice so this screen matches the main view."""
-    try:
-        saved = page.client_storage.get("lang") or "ar"
-    except Exception:
-        saved = "ar"
-    return Language(saved)
+    return Language(get_lang(page))
 
 
 class NotificationCard(ft.Container):
@@ -189,7 +193,8 @@ class NotificationViewManager:
     """Manages the UI creation and thread handling for the notifications screen."""
     def __init__(self, page: ft.Page):
         self.page = page
-        self.loc = get_loc(page)
+        self.lang = get_lang(page)
+        self.loc = Language(self.lang)
         self.manager = NotificationManager()
         self.notif_list = ft.ListView(expand=True, spacing=0)
         self.loading_ring = ft.ProgressRing(color=theme.PRIMARY)
@@ -207,11 +212,15 @@ class NotificationViewManager:
         items = self.manager.fetch_sorted_notifications()
 
         for item in items:
+            noti_ar = item.get('noti', '')
+            noti_en = item.get('en_noti') or noti_ar  # fall back to Arabic if no English text
+            text = noti_ar if self.lang == "ar" else noti_en
+
             self.notif_list.controls.append(
                 NotificationCard(
                     page=self.page,
                     loc=self.loc,
-                    text=item.get('noti', '') if self.page.client_storage.get("lang") == "ar" else item.get("en_noti"),
+                    text=text,
                     amount=item.get('amount', 0),
                     noti_type=item.get('type', ''),
                     date=item.get('date', ''),
