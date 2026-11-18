@@ -1,77 +1,50 @@
-name: Build Flet APK
+name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
-        run: |
-          pip install flet==0.19.0
-          pip install -r requirements.txt
-
-      - name: Set up Java
-        uses: actions/setup-java@v3
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.22.2'
           channel: 'stable'
 
-      - name: Build Android APK with Flet
+      - name: Install Dependencies & Flet
         run: |
-          flet build apk --no-pub-get || true
+          python -m pip install --upgrade pip
+          pip install flet==0.23.2
+          pip install -r requirements.txt
 
-      - name: Fix App Name in AndroidManifest (Arabic Support)
+      - name: Accept Android SDK licenses
+        run: yes | flutter doctor --android-licenses || true
+
+      - name: Build Android APK
         run: |
-          python -c '
-          import glob
-          import re
+          flet build apk --verbose
 
-          manifests = glob.glob("**/AndroidManifest.xml", recursive=True)
-          updated = False
-          for m in manifests:
-              if "build" in m or ".flet" in m:
-                  with open(m, "r", encoding="utf-8") as f:
-                      content = f.read()
-                  
-                  if "android:label=" in content:
-                      # استبدل عبارة "حيدر" بالاسم الذي تريده بالضبط
-                      content = re.sub(r"android:label=\"([^\"]+)\"", "android:label=\"اسم التطبيق بالعربي\"", content)
-                      with open(m, "w", encoding="utf-8") as f:
-                          f.write(content)
-                      print(f"Successfully updated app name in: {m}")
-                      updated = True
-          
-          if not updated:
-              print("Warning: AndroidManifest.xml not found for modification!")
-          '
-
-      - name: Complete Build APK
-        run: |
-          flet build apk
-
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: |
-            build/app/outputs/flutter-apk/*.apk
-            build/app/outputs/apk/release/*.apk
-            **/*.apk
+          name: ForumApp-Release
+          path: build/apk/*.apk
