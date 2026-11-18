@@ -7,7 +7,7 @@ from core import theme
 from core.languages import Language
 
 # --- Global Configurations ---
-FIREBASE_URL = "https://alwafa-afcc1-default-rtdb.firebaseio.com/noti.json"
+FIREBASE_URL = "https://satine-2f698-default-rtdb.firebaseio.com/noti.json"
 NOTIFICATIONS_FILE = "notifications.json"
 COUNT_FILE = "last_count.json"
 
@@ -28,12 +28,12 @@ class NotificationCard(ft.Container):
 
         # Configure icon and color based on notification type
         config = {
-            "w": {"text": loc.t("notif_withdraw", amount=f"{amount:,.0f}"), "color": theme.DANGER, "icon": ft.icons.CALL_MADE},
-            "d": {"text": loc.t("notif_deposit", amount=f"{amount:,.0f}"), "color": theme.PRIMARY, "icon": ft.icons.CALL_RECEIVED},
-            "don": {"text": loc.t("notif_donation", amount=f"{amount:,.0f}"), "color": theme.GOLD, "icon": ft.icons.MONETIZATION_ON},
-            "s": {"text": loc.t("notif_new_sub"), "color": theme.PRIMARY_LIGHT, "icon": ft.icons.PERSON_ADD_ALT_1},
-            "u": {"text": loc.t("notif_unsub"), "color": theme.GOLD, "icon": ft.icons.PERSON_REMOVE_ALT_1}
-        }.get(noti_type, {"text": loc.t("notif_general"), "color": "#BDBDBD", "icon": ft.icons.NOTIFICATIONS_OUTLINED})
+            "w": {"text": loc.t("notif_withdraw", amount=f"{amount:,.0f}"), "color": theme.DANGER, "chip": theme.DANGER_SOFT, "icon": ft.icons.CALL_MADE_ROUNDED},
+            "d": {"text": loc.t("notif_deposit", amount=f"{amount:,.0f}"), "color": theme.PRIMARY_DARK, "chip": theme.PRIMARY_SOFT, "icon": ft.icons.CALL_RECEIVED_ROUNDED},
+            "don": {"text": loc.t("notif_donation", amount=f"{amount:,.0f}"), "color": theme.GOLD_DARK, "chip": theme.GOLD_SOFT, "icon": ft.icons.MONETIZATION_ON_ROUNDED},
+            "s": {"text": loc.t("notif_new_sub"), "color": theme.PRIMARY_DARK, "chip": theme.PRIMARY_SOFT, "icon": ft.icons.PERSON_ADD_ALT_1_ROUNDED},
+            "u": {"text": loc.t("notif_unsub"), "color": theme.GOLD_DARK, "chip": theme.GOLD_SOFT, "icon": ft.icons.PERSON_REMOVE_ALT_1_ROUNDED}
+        }.get(noti_type, {"text": loc.t("notif_general"), "color": theme.TEXT_SECONDARY, "chip": theme.SURFACE_ALT, "icon": ft.icons.NOTIFICATIONS_OUTLINED})
 
         # Main layout elements: Title and Notification text first
         card_columns = [
@@ -46,11 +46,11 @@ class NotificationCard(ft.Container):
             # check if the image is bank notification or not
             if bank == True:
                 img_text = loc.t("bank_notif")
-                img_txt_col = theme.PRIMARY_LIGHT
+                img_txt_col = theme.PRIMARY_DARK
                 img_icon = "check_circle"
             else:
                 img_text = loc.t("view_image")
-                img_txt_col = theme.GOLD_SOFT
+                img_txt_col = theme.GOLD_DARK
                 img_icon = "image"
             # Compact "Bankak Notification" button with explicit icon size control
             view_img_btn = ft.TextButton(
@@ -78,18 +78,19 @@ class NotificationCard(ft.Container):
         card_columns.append(ft.Text(loc.t("on_day", date=date), color=theme.TEXT_MUTED, size=11))
 
         super().__init__(
-            padding=ft.padding.only(right=10, left=10, top=10, bottom=15),
+            padding=ft.padding.only(right=12, left=12, top=12, bottom=15),
             bgcolor=theme.SURFACE,
-            border_radius=15,
+            border_radius=16,
+            border=ft.border.all(1, theme.BORDER),
             margin=ft.margin.only(bottom=10)
         )
 
         self.content = ft.Row(
             controls=[
                 ft.Container(
-                    content=ft.Icon(config["icon"], color=config["color"], size=22),
+                    content=ft.Icon(config["icon"], color=config["color"], size=20),
                     padding=10,
-                    bgcolor=theme.SURFACE_ALT,
+                    bgcolor=config["chip"],
                     border_radius=12
                 ),
                 ft.Column(
@@ -210,7 +211,7 @@ class NotificationViewManager:
                 NotificationCard(
                     page=self.page,
                     loc=self.loc,
-                    text=item.get('noti', ''),
+                    text=item.get('noti', '') if self.page.client_storage.get("lang") == "ar" else item.get("en_noti"),
                     amount=item.get('amount', 0),
                     noti_type=item.get('type', ''),
                     date=item.get('date', ''),
@@ -225,25 +226,24 @@ class NotificationViewManager:
 
         header = ft.Container(
             gradient=ft.LinearGradient(
-                begin=ft.alignment.bottom_left,
-                end=ft.alignment.top_right,
+                begin=ft.alignment.top_left,
+                end=ft.alignment.bottom_right,
                 colors=theme.GRADIENT_HEADER
             ),
             content=ft.Row([
                 ft.Column([
-                    ft.Text(self.loc.t("total_deposits"), color=theme.PRIMARY, size=14),
-                    ft.Text(f"{total_deposit:,.0f}", color=theme.PRIMARY, size=20, weight=ft.FontWeight.BOLD)
+                    ft.Text(self.loc.t("total_deposits"), color=theme.ON_HEADER_MUTED, size=14),
+                    ft.Text(f"{total_deposit:,.0f}", color=theme.ON_HEADER, size=20, weight=ft.FontWeight.BOLD)
                 ], expand=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                ft.VerticalDivider(width=1, color=theme.BORDER),
+                ft.VerticalDivider(width=1, color=ft.colors.with_opacity(0.25, ft.colors.WHITE)),
                 ft.Column([
-                    ft.Text(self.loc.t("total_withdrawals"), color=theme.DANGER, size=14),
-                    ft.Text(f"{total_withdraw:,.0f}", color=theme.DANGER, size=20, weight=ft.FontWeight.BOLD)
+                    ft.Text(self.loc.t("total_withdrawals"), color=theme.ON_HEADER_MUTED, size=14),
+                    ft.Text(f"{total_withdraw:,.0f}", color=theme.ON_HEADER, size=20, weight=ft.FontWeight.BOLD)
                 ], expand=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             ]),
             padding=20,
-            bgcolor=theme.SURFACE,
             border_radius=20,
-            margin=ft.margin.only(top=30)
+            margin=ft.margin.only(top=30, bottom=15)
         )
 
         self.view.controls = [header, self.notif_list]
@@ -271,7 +271,7 @@ def build_notification_icon(page: ft.Page):
     return ft.Stack([
         ft.IconButton(
             icon=ft.icons.NOTIFICATIONS,
-            icon_color=ft.colors.GREY_400,
+            icon_color=theme.ON_HEADER_MUTED,
             on_click=lambda _: page.go("/notifications")
         ),
         ft.Container(
